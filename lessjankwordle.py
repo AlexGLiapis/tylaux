@@ -88,7 +88,7 @@ class Game_State():
         if guess == self.answer:
             return True
 
-        if !incr_curr_turn():
+        if not incr_curr_turn():
             return False
         guess_breakdown = process_guess(guess)
         return guess_breakdown

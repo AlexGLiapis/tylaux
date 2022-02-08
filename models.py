@@ -37,7 +37,6 @@ def load_English_dict():
 # Contains many obscure words.
 def load_Alternate_dict():
     df = pd.read_csv("data/word-list-raw.txt", sep=":", engine="python")
-    df.rename(columns={"&c":"Value"}, inplace=True) # Rename columns.
     df['Length'] = df.apply(lambda x: len(str(x['Value'])), axis = 1) # Compute word length.
     df = df[df.Length < 11] # Don't need super long words.
     df['Value'] = df['Value'].str.lower() # Lowercase letters.

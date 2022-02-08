@@ -14,8 +14,6 @@ db = SQLAlchemy(app, session_options={'autocommit': False})
 # Loads American English dictionary. Source: https://github.com/karthikramx/snippable-dictionary
 # Does not contain variants of words, just base word (ex. silk -> silks, silky).
 def load_English_dict():
-    # Load and clean up the raw English dictionary csv & adding length column.
-
     df = pd.read_csv('data/dictionary.csv')
     df.pop("Unnamed: 0") # Remove index column.
     df.pop("meaning")    # Remove meaning column.

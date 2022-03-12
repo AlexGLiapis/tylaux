@@ -8,8 +8,7 @@ class CustomUnittest(TestCase):
         self.assertEqual(new.turn_limit, 6)
         self.assertEqual(new.hard_mode, False)
 
-        new = GameState(6, 7, True)
-        self.assertEqual(new.word_len, 6)
+        new = GameState(7, True)
         self.assertEqual(new.turn_limit, 7)
         self.assertEqual(new.hard_mode, True)
 
@@ -19,55 +18,44 @@ class CustomUnittest(TestCase):
         output = new.set_daily_answer()
         new.answer = ""
         output2 = new.set_daily_answer()
-        assertEqual(output, output2)
+        self.assertEqual(output, output2)
 
     def test_set_guess(self):
         new = GameState()
         new.answer = "word"
         new.word_len = 4
         output = new.set_guess("123 asd")
-        assertEqual(output, "Invalid characters.")
+        self.assertEqual(output, "Invalid characters.")
         output = new.set_guess("fan-")
-        assertEqual(output, "Invalid characters.")
+        self.assertEqual(output, "Invalid characters.")
 
         output = new.set_guess("")
-        assertEqual(output, "Incorrect word length.")
+        self.assertEqual(output, "Incorrect word length.")
         output = new.set_guess("asdfasf")
-        assertEqual(output, "Incorrect word length.")
+        self.assertEqual(output, "Incorrect word length.")
 
         output = new.set_guess("abcd")
-        assertEqual(output, "Invalid word.")
+        self.assertEqual(output, "Invalid word.")
         output = new.set_guess("ghjx")
-        assertEqual(output, "Invalid word.")
+        self.assertEqual(output, "Invalid word.")
 
         output = new.set_guess("bird")
-        assertEqual(new.guess, "bird")
-        assertEqual(new.guess_hist[-1], "bird")
+        self.assertEqual(new.guess, "bird")
+        self.assertEqual(new.guess_hist[-1], "bird")
         output = new.set_guess("dark")
-        assertEqual(new.guess, "dark")
-        assertEqual(new.guess_hist[-1], "dark")
-
-    def test_set_word_len(self):
-        new = GameState()
-        new.set_word_len(5)
-        self.assertEqual(new.word_len, 5)
-
-        new.set_word_len(7)
-        self.assertEqual(new.word_len, 7)
-
-        new.set_word_len(35)
-        self.assertEqual(new.word_len, 5)
+        self.assertEqual(new.guess, "dark")
+        self.assertEqual(new.guess_hist[-1], "dark")
 
     def test_set_turn_limit(self):
         new = GameState()
         new.set_turn_limit(6)
-        self.assertEqual(new.word_len, 6)
+        self.assertEqual(new.turn_limit, 6)
 
-        new.set_word_len(10)
-        self.assertEqual(new.word_len, 10)
+        new.set_turn_limit(10)
+        self.assertEqual(new.turn_limit, 10)
 
-        new.set_word_len(-1)
-        self.assertEqual(new.word_len, 6)
+        new.set_turn_limit(-1)
+        self.assertEqual(new.turn_limit, 6)
 
     def test_incr_curr_turn(self):
         new = GameState()
@@ -77,7 +65,7 @@ class CustomUnittest(TestCase):
         self.assertEqual(new.curr_turn, 2)
 
         output = new.incr_curr_turn()
-        self.assertEqual(new.word_len, 3)
+        self.assertEqual(new.curr_turn, 3)
 
         output = new.incr_curr_turn()
         self.assertEqual(output, False)
@@ -100,92 +88,98 @@ class CustomUnittest(TestCase):
         new.curr_turn = 1
         new.turn_limit = 1
         output = new.guess_checker("build")
-        assertEqual(output, False)
+        self.assertEqual(output, "Turn limit reached.")
         output = new.guess_checker("homes")
-        assertEqual(output, False)
+        self.assertEqual(output, "Turn limit reached.")
 
         new.turn_limit = 6
         output = new.guess_checker("homes")
-        assertEqual(output, True)
+        self.assertEqual(output, True)
 
         output = new.guess_checker("horse")
-        assertEqual(output, [2,2,0,1,1])
+        self.assertEqual(output, [2,2,0,1,1])
         output = new.guess_checker("build")
-        assertEqual(output, [0,0,0,0,0])
+        self.assertEqual(output, [0,0,0,0,0])
 
     def test_process_guess(self):
         new = GameState()
         new.answer = "homes"
         new.word_len = 5
         output = new.process_guess("build")
-        assertEqual(output, [0,0,0,0,0])
+        self.assertEqual(output, [0,0,0,0,0])
 
         output = new.process_guess("halve")
-        assertEqual(output, [2,0,0,0,1])
+        self.assertEqual(output, [2,0,0,0,1])
 
         output = new.process_guess("homes")
-        assertEqual(output, [2,2,2,2,2])
+        self.assertEqual(output, [2,2,2,2,2])
 
         new.answer = "books"
         new.word_len = 5
         output = new.process_guess("happy")
-        assertEqual(output, [0,0,0,0,0])
+        self.assertEqual(output, [0,0,0,0,0])
 
         output = new.process_guess("hooks")
-        assertEqual(output, [0,2,2,2,2])
+        self.assertEqual(output, [0,2,2,2,2])
 
         output = new.process_guess("oboes")
-        assertEqual(output, [0,2,2,2,2])
+        self.assertEqual(output, [1,1,2,0,2])
 
 
     def test_find_partial(self):
         new = GameState()
         output = new.find_partial("birds", [1,1,0,1,1])
-        assertEqual(output, {0:"b", 1:"i", 3:"r", 4:"s"})
+        self.assertEqual(output, {0:"b", 1:"i", 3:"d", 4:"s"})
 
         output = new.find_partial("birds", [1,2,1,0,2])
-        assertEqual(output, {0:"b", 2:"r"})
+        self.assertEqual(output, {0:"b", 2:"r"})
 
         output = new.find_partial("reads", [2,0,2,2,0])
-        assertEqual(output, {})
+        self.assertEqual(output, {})
 
     def test_find_correct(self):
         new = GameState()
         output = new.find_correct("birds", [1,1,0,1,1])
-        assertEqual(output, {})
+        self.assertEqual(output, {})
 
         output = new.find_correct("birds", [1,2,1,0,2])
-        assertEqual(output, {1:"i", 4:"s"})
+        self.assertEqual(output, {1:"i", 4:"s"})
 
         output = new.find_correct("reads", [2,0,2,2,0])
-        assertEqual(output, {0:"r", 2:"a", 3:"d"})
+        self.assertEqual(output, {0:"r", 2:"a", 3:"d"})
 
     def test_is_valid_hard_mode(self):
         new = GameState()
         new.answer = "books"
-        new.set_guess("turns")
+        new.guess_checker("turns")
         output = new.is_valid_hard_mode("birds")
-        assertEqual(output, True)
+        self.assertEqual(output, True)
+        new.guess_checker("birds")
         output = new.is_valid_hard_mode("about")
-        assertEqual(output, False)
+        self.assertEqual(output, 'Position 0 needs to be "b".')
 
         new = GameState()
         new.answer = "shots"
-        new.set_guess("house")
+        new.guess_checker("house")
         output = new.is_valid_hard_mode("shoes")
-        assertEqual(output, True)
-        output = new.is_valid_hard_mode("those")
-        assertEqual(output, True)
+        self.assertEqual(output, True)
+        new.guess_checker("shoes")
+        output = new.is_valid_hard_mode("shows")
+        self.assertEqual(output, True)
+        new.guess_checker("shows")
         output = new.is_valid_hard_mode("throw")
-        assertEqual(output, False)
+        self.assertEqual(output, 'Position 0 needs to be "s".')
 
     def test_is_valid_word(self):
         new = GameState()
         output = new.is_valid_word("bird")
-        assertEqual(output, True)
+        self.assertEqual(output, True)
 
         output = new.is_valid_word("because")
-        assertEqual(output, True)
+        self.assertEqual(output, True)
 
         output = new.is_valid_word("hfzzdfasddg")
-        assertEqual(output, False)
+        self.assertEqual(output, False)
+
+if __name__ == '__main__':
+    main()

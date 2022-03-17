@@ -11,12 +11,11 @@ class GameState():
         self.word_len = 5
         self.turn_limit = None
         self.curr_turn = 1
-        self.hard_mode = None
+        self.hard_mode = hard_mode
         self.date = None
         self.num_word_db = None
 
         self.init_db_info()
-        self.set_hard_mode(hard_mode)
         self.set_turn_limit(turn_limit)
         self.set_daily_answer()
 
@@ -51,8 +50,13 @@ class GameState():
             return "Invalid characters."
         if len(temp_guess) != self.word_len:
             return "Incorrect word length."
-        if (self.hard_mode and self.is_valid_hard_mode(temp_guess)) or (not self.hard_mode and not self.is_valid_word(temp_guess)):
-            return "Invalid word."
+        if self.hard_mode:
+            if not self.is_valid_hard_mode(temp_guess):
+                return "Invalid word."
+        else:
+            if not self.is_valid_word(temp_guess):
+                return "Invalid word."
+
         self.guess = temp_guess
         self.guess_hist.append(self.guess)
         return True

@@ -1,4 +1,5 @@
 from datetime import date
+from sqlalchemy import func
 import random
 import re
 from models import app, db, Word
@@ -10,10 +11,11 @@ class GameState():
         self.guess_hist = []
         self.word_len = 5
         self.turn_limit = None
-        self.curr_turn = 1
+        self.curr_turn = 0
         self.hard_mode = hard_mode
         self.date = None
         self.num_word_db = None
+        self.min_word_db = None
 
         self.init_db_info()
         self.set_turn_limit(turn_limit)
@@ -22,6 +24,7 @@ class GameState():
     # Initialize the number of valid answers from the 5-letter database.
     def init_db_info(self):
         self.num_word_db = db.session.query(Word.Index).filter(Word.Length == self.word_len).count()
+        self.min_word_db = db.session.query(func.min(Word.Index)).filter(Word.Length == self.word_len).first()[0]
 
     # Sets the date variable and returns True if it has changed.
     def update_date(self):
@@ -36,30 +39,10 @@ class GameState():
     def set_daily_answer(self):
         if self.update_date():
             random.seed(hash(self.date))
-            todays_index = random.randint(0, self.num_word_db)
-            self.answer = db.session.query(Word.Value).filter(Word.Index == todays_index).first()
+            todays_index = random.randint(0, self.num_word_db) + self.min_word_db
+            self.answer = db.session.query(Word.Value).filter(Word.Index == todays_index).first()[0]
             return self.answer
         return False
-
-    # Sets the current guess and pushes it to the guess history.
-    # Must only contains lowercase letters, match length, and is a valid word.
-    def set_guess(self, guess):
-        temp_guess = str(guess.lower())
-        result = re.fullmatch("^[a-z]*$", temp_guess)
-        if result is None:
-            return "Invalid characters."
-        if len(temp_guess) != self.word_len:
-            return "Incorrect word length."
-        if self.hard_mode:
-            if not self.is_valid_hard_mode(temp_guess):
-                return "Invalid word."
-        else:
-            if not self.is_valid_word(temp_guess):
-                return "Invalid word."
-
-        self.guess = temp_guess
-        self.guess_hist.append(self.guess)
-        return True
 
     # Defines the turn limit for the puzzle.
     def set_turn_limit(self, turn_limit):
@@ -89,22 +72,44 @@ class GameState():
             self.hard_mode = False
         return self.hard_mode
 
-    # Main guess checking function
-    def guess_checker(self, guess):
+    # Main guess checking & setting function. Calls all related functions.
+    def set_guess(self, guess):
         # TODO: Ensure guess len = answer len in main & front end
-        result = self.set_guess(guess)
-        if result != True:
-            return result
-        if not self.incr_curr_turn():
+        # Call guess validator & check if the game is still continuing.
+        result, output = self.is_valid_guess(guess)
+        if not self.incr_curr_turn() or (output != self.answer and self.curr_turn == self.turn_limit):
             return "Turn limit reached."
-        if len(self.guess) != len(self.answer):
-            return "Word Length Mismatch."
 
+        # Check if valid guess checker failed, if so return the statement.
+        if not result:
+            return output
+
+        # Update guess in the object. CHeck if it is the solution.
+        self.guess = output
+        self.guess_hist.append(self.guess)
         if self.guess == self.answer:
             return True
 
+        # Valid guess is processed to check its correct letters.
         guess_breakdown = self.process_guess(self.guess)
         return guess_breakdown
+
+    # Goes through and evaluates the guess.
+    # Must only contains lowercase letters, match length, and is a valid word.
+    def is_valid_guess(self, guess):
+        temp_guess = str(guess.lower())
+        result = re.fullmatch("^[a-z]*$", temp_guess)
+        if result is None:
+            return False, "Invalid characters."
+        if len(temp_guess) != self.word_len:
+            return False, "Incorrect word length."
+        if self.hard_mode:
+            if not self.is_valid_hard_mode(temp_guess):
+                return False, "Invalid word."
+        else:
+            if not self.is_valid_word(temp_guess):
+                return False, "Invalid word."
+        return True, temp_guess
 
     # Calculate the incorrect letters (0),
     # partial: correct letter, incorrect position (1),
@@ -181,6 +186,9 @@ class GameState():
             return False
         return True
 
+    # Resets the game state entirely.
+    def reset_game(self):
+        self.__init__()
 
 class CustomGameState(GameState):
     def __init__(self, answer, turn_limit, hard_mode):

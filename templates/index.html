@@ -1,0 +1,31 @@
+{% block content %}
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>Loopdle</title>
+  <link rel="icon" href="assets/icon.png">
+</head>
+<body>
+  <br><br>
+  {% if guesses != None %}
+    {% for i in guesses %}
+      <p> {{i}} </p>
+    {% endfor %}
+  {% endif %}
+  <form method="post">
+    <input type="text" name="Input">
+  </form>
+  {% if result != None %}
+    {% if result == True %}
+      <p> Correct! </p>
+    {% else %}
+      <p> {{result}} </p>
+    {% endif %}
+  {% endif %}
+  <br> <br>
+  {% if debug_text != None %}
+    <p hidden> {{debug_text}} </p>
+  {% endif %}
+
+</body>
+{% endblock %}
